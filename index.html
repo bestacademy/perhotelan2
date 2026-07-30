@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Interaktif Perhotelan</title>
+    <!-- Memuat Tailwind CSS untuk desain (Agar rapi dan responsif) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f3f4f6; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Style untuk tombol yang dipilih */
+        .option-btn.selected {
+            background-color: #3b82f6; /* Warna biru */
+            color: white;
+            border-color: #2563eb;
+        }
+        .option-btn.selected span.badge {
+            background-color: white;
+            color: #2563eb;
+            border-color: transparent;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden fade-in">
+        
+        <!-- Header -->
+        <div class="bg-blue-600 p-6 text-center text-white">
+            <h1 class="text-2xl font-bold">Evaluasi Pengetahuan Perhotelan</h1>
+            <p class="text-blue-100 text-sm mt-1">Jawablah 20 pertanyaan berikut dengan teliti.</p>
+        </div>
+
+        <div id="welcome-screen" class="p-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800 text-center">Isi Identitas Anda</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="nama">Nama Lengkap</label>
+                    <input type="text" id="nama" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Masukkan nama Anda">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="kelas">Kelas / Instansi</label>
+                    <input type="text" id="kelas" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Masukkan kelas atau instansi">
+                </div>
+                <button onclick="startQuiz()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 mt-4 shadow-md">
+                    Mulai Kuis
+                </button>
+            </div>
+            <p id="error-msg" class="text-red-500 text-sm mt-3 text-center hidden">Harap isi Nama dan Kelas terlebih dahulu!</p>
+        </div>
+
+        <div id="quiz-screen" class="p-8 hidden">
+            <!-- Progress Bar -->
+            <div class="mb-6">
+                <div class="flex justify-between text-sm text-gray-500 mb-1">
+                    <span id="progress-text">Soal 1 dari 20</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 5%"></div>
+                </div>
+            </div>
+
+            <!-- Teks Pertanyaan -->
+            <h3 id="question-text" class="text-lg font-medium text-gray-800 mb-6 leading-relaxed">
+                <!-- Teks pertanyaan akan dimuat di sini -->
+            </h3>
+
+            <!-- Kotak Pilihan Jawaban -->
+            <div id="options-container" class="space-y-3">
+                <!-- Tombol pilihan akan dimuat di sini menggunakan Javascript -->
+            </div>
+
+            <!-- Navigasi Bawah (Tombol Berikutnya / Sebelumnya) -->
+            <div class="flex justify-between mt-8">
+                <button id="prev-btn" onclick="prevQuestion()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition hidden font-medium">
+                    &larr; Sebelumnya
+                </button>
+                <button id="next-btn" onclick="nextQuestion()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition ml-auto font-medium" disabled>
+                    Selanjutnya &rarr;
+                </button>
+                <button id="submit-btn" onclick="submitQuiz()" class="px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-lg transition ml-auto hidden font-bold shadow-lg">
+                    Kumpulkan Jawaban
+                </button>
+            </div>
+        </div>
+
+        <div id="result-screen" class="p-8 hidden text-center">
+            <div class="mb-6">
+                <svg class="w-20 h-20 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <h2 class="text-2xl font-bold text-gray-800">Kuis Selesai!</h2>
+                <p class="text-gray-600 mt-2">Terima kasih telah mengerjakan, <span id="display-name" class="font-semibold"></span>.</p>
+            </div>
+            
+            <div class="bg-blue-50 p-6 rounded-xl inline-block mb-6 shadow-sm border border-blue-100">
+                <p class="text-sm text-gray-500 uppercase tracking-wider font-semibold">Nilai Akhir Anda</p>
+                <!-- Menampilkan Nilai 0 - 100 -->
+                <p id="final-score" class="text-6xl font-black text-blue-600 mt-2">100</p>
+                <p class="text-sm text-gray-600 mt-3" id="score-details">Benar: 20 | Salah: 0</p>
+            </div>
+
+            <!-- Status Pengiriman Data -->
+            <div id="saving-status" class="bg-gray-100 p-4 rounded-lg text-sm text-gray-700 font-medium animate-pulse">
+                ⏳ Sedang menyimpan nilai ke Spreadsheet...
+            </div>
+            
+            <button onclick="location.reload()" class="mt-6 px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition">
+                Kerjakan Ulang
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // PENTING!!! GANTI LINK DI BAWAH INI DENGAN LINK DARI GOOGLE APPS SCRIPT
+        // =========================================================================
+        const SCRIPT_URL = 'https://script.google.com/macros/library/d/1se9HacYaKUdVXNSFLdTHyEZrxy1OJZZg8b_MFHK7ATUGIgJPJhPV7-y1/3'; 
+        
+        // Data Soal (20 Soal Pilihan Ganda dari dokumen)
+        const questions = [
+            // BAGIAN 1: JENIS HOTEL
+            {
+                text: "Hotel yang terletak di pusat kota dan umumnya melayani tamu yang melakukan perjalanan bisnis maupun pemerintahan disebut ....",
+                options: ["Resort Hotel", "Airport Hotel", "City Hotel", "Beach Hotel", "Mountain Hotel"],
+                answer: 2 // Jawaban: City Hotel (Index 2 karena dimulai dari 0)
+            },
+            {
+                text: "Berikut yang bukan merupakan karakteristik City Hotel adalah ....",
+                options: ["Dekat kawasan perkantoran", "Memiliki ruang rapat (meeting room)", "Berada di daerah wisata alam", "Dekat pusat perbelanjaan", "Banyak digunakan pebisnis"],
+                answer: 2 
+            },
+            {
+                text: "Seorang wisatawan ingin menikmati suasana pantai, fasilitas spa, dan berbagai aktivitas rekreasi. Jenis hotel yang paling sesuai adalah ....",
+                options: ["City Hotel", "Airport Hotel", "Resort Hotel", "Business Hotel", "Transit Hotel"],
+                answer: 2 
+            },
+            {
+                text: "Hotel yang berada di sekitar bandara dan melayani penumpang transit maupun awak pesawat disebut ....",
+                options: ["Resort Hotel", "Airport Hotel", "Boutique Hotel", "Family Hotel", "Residential Hotel"],
+                answer: 1 
+            },
+            {
+                text: "Sebuah keluarga berlibur bersama anak-anak dan membutuhkan kamar keluarga serta area bermain anak. Mereka sebaiknya memilih ....",
+                options: ["Business Hotel", "Boutique Hotel", "Family Hotel", "Transit Hotel", "Airport Hotel"],
+                answer: 2 
+            },
+            {
+                text: "Hotel yang memiliki desain unik, jumlah kamar relatif sedikit, serta memberikan pelayanan yang lebih personal disebut ....",
+                options: ["Budget Hotel", "Boutique Hotel", "Luxury Hotel", "Resort Hotel", "City Hotel"],
+                answer: 1 
+            },
+            {
+                text: "Seorang mahasiswa ingin menginap dengan biaya yang terjangkau dan hanya membutuhkan fasilitas dasar. Jenis hotel yang paling tepat adalah ....",
+                options: ["Luxury Hotel", "Budget Hotel", "Business Hotel", "Beach Hotel", "Chain Hotel"],
+                answer: 1 
+            },
+            {
+                text: "Berikut yang merupakan contoh fasilitas Luxury Hotel adalah ....",
+                options: ["Pantry dan mesin cuci", "Butler Service dan Executive Lounge", "Shuttle bandara dan ruang istirahat", "Area hiking dan camping", "Area bermain anak dan kolam renang anak"],
+                answer: 1 
+            },
+            {
+                text: "Hotel yang menjadi bagian dari jaringan hotel nasional atau internasional dengan standar pelayanan yang sama disebut ....",
+                options: ["Independent Hotel", "Residential Hotel", "Chain Hotel", "Small Hotel", "Boutique Hotel"],
+                answer: 2 
+            },
+            {
+                text: "Sebuah hotel memiliki 350 kamar. Berdasarkan ukuran hotel, hotel tersebut termasuk kategori ....",
+                options: ["Small Hotel", "Medium Hotel", "Large Hotel", "Boutique Hotel", "Budget Hotel"],
+                answer: 2 
+            },
+            
+            // BAGIAN 2: DEPARTEMEN HOTEL
+            {
+                text: "Departemen hotel adalah bagian dari organisasi hotel yang memiliki tugas dan tanggung jawab tertentu untuk ....",
+                options: ["Mengelola wisata daerah", "Mendukung operasional hotel secara keseluruhan", "Mengatur transportasi tamu", "Mengelola biro perjalanan wisata", "Menyediakan jasa hiburan"],
+                answer: 1 
+            },
+            {
+                text: "Pimpinan tertinggi dalam struktur organisasi hotel secara umum adalah ....",
+                options: ["Front Office Manager", "Executive Chef", "Human Resources Manager", "General Manager (GM)", "Chief Engineer"],
+                answer: 3 
+            },
+            {
+                text: "Departemen yang menjadi pusat pelayanan tamu dan sering disebut sebagai wajah hotel adalah ....",
+                options: ["Housekeeping Department", "Engineering Department", "Front Office Department", "Purchasing Department", "Security Department"],
+                answer: 2 
+            },
+            {
+                text: "Berikut yang bukan merupakan tugas utama Front Office Department adalah ....",
+                options: ["Melakukan check-in tamu", "Memberikan informasi kepada tamu", "Menangani pembayaran tamu", "Membersihkan kamar tamu", "Menangani reservasi kamar"],
+                answer: 3 
+            },
+            {
+                text: "Departemen yang bertanggung jawab menjaga kebersihan, kerapian, kenyamanan, dan keindahan seluruh area hotel adalah ....",
+                options: ["Security Department", "Food and Beverage Department", "Housekeeping Department", "Sales and Marketing Department", "Accounting Department"],
+                answer: 2 
+            },
+            {
+                text: "Seorang tamu mengeluhkan AC di kamarnya tidak berfungsi dengan baik. Departemen yang paling tepat untuk menangani masalah tersebut adalah ....",
+                options: ["Front Office Department", "Engineering and Maintenance Department", "Housekeeping Department", "Security Department", "Purchasing Department"],
+                answer: 1 
+            },
+            {
+                text: "Departemen yang bertugas menyajikan makanan dan minuman serta melayani tamu di restoran adalah ....",
+                options: ["Food Production (Kitchen)", "Human Resources Department", "Food and Beverage Service Department", "Accounting Department", "Information Technology Department"],
+                answer: 2 
+            },
+            {
+                text: "Bagian hotel yang bertugas mengolah bahan makanan hingga siap disajikan kepada tamu adalah ....",
+                options: ["Front Office", "Sales and Marketing", "Food Production (Kitchen)", "Security", "Purchasing"],
+                answer: 2 
+            },
+            {
+                text: "Departemen yang bertugas melakukan promosi hotel, menjalin kerja sama dengan pelanggan, serta meningkatkan penjualan produk dan jasa hotel adalah ....",
+                options: ["Accounting and Finance Department", "Sales and Marketing Department", "Human Resources Department", "Purchasing Department", "Information Technology Department"],
+                answer: 1 
+            },
+            {
+                text: "Departemen yang bertanggung jawab mengelola jaringan internet, sistem reservasi (PMS), dan memberikan dukungan teknis kepada karyawan adalah ....",
+                options: ["Engineering Department", "Accounting Department", "Information Technology (IT) Department", "Security Department", "Human Resources Department"],
+                answer: 2 
+            }
+        ];
+
+        // Variabel untuk menyimpan kondisi saat kuis berjalan
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(questions.length).fill(null);
+        let userName = "";
+        let userClass = "";
+
+        // Elemen HTML yang akan diubah-ubah tampilaannya
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        
+        // Fungsi saat tombol "Mulai Kuis" ditekan
+        function startQuiz() {
+            userName = document.getElementById('nama').value.trim();
+            userClass = document.getElementById('kelas').value.trim();
+            
+            // Cek jika nama atau kelas kosong
+            if(userName === "" || userClass === "") {
+                document.getElementById('error-msg').classList.remove('hidden');
+                return;
+            }
+            
+            // Pindah dari halaman identitas ke halaman kuis
+            document.getElementById('error-msg').classList.add('hidden');
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            
+            loadQuestion(); // Muat pertanyaan pertama
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQuestionIndex];
+            
+            // Update teks bar kemajuan (progress bar)
+            document.getElementById('progress-text').innerText = `Soal ${currentQuestionIndex + 1} dari ${questions.length}`;
+            document.getElementById('progress-bar').style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+            
+            // Tampilkan teks soal
+            document.getElementById('question-text').innerText = `${currentQuestionIndex + 1}. ${q.text}`;
+            
+            // Buat tombol-tombol pilihan jawaban
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = ''; // Kosongkan pilihan lama
+            
+            const abcd = ['A', 'B', 'C', 'D', 'E']; // Label opsi
+            
+            q.options.forEach((optionText, index) => {
+                const btn = document.createElement('button');
+                const isSelected = userAnswers[currentQuestionIndex] === index;
+                
+                // Desain tombol (Warna berubah jika dipilih)
+                btn.className = `option-btn w-full text-left p-4 rounded-xl border border-gray-200 transition-all duration-200 hover:border-blue-400 hover:bg-blue-50 focus:outline-none flex items-center group ${isSelected ? 'selected' : ''}`;
+                
+                // Jika tombol di-klik, panggil fungsi selectOption
+                btn.onclick = () => selectOption(index);
+                
+                btn.innerHTML = `
+                    <span class="badge inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 mr-3 text-sm font-semibold group-hover:bg-white group-hover:text-blue-600 ${isSelected ? 'bg-white text-blue-600 border-none' : 'bg-gray-50 text-gray-600'}">
+                        ${abcd[index]}
+                    </span>
+                    <span class="flex-1">${optionText}</span>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+
+            // Sembunyikan tombol "Sebelumnya" jika sedang di soal pertama
+            document.getElementById('prev-btn').classList.toggle('hidden', currentQuestionIndex === 0);
+            
+            const nextBtn = document.getElementById('next-btn');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            // Jika ini soal terakhir, munculkan tombol "Kumpulkan"
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+
+            checkNextButtonState(); // Cek apakah jawaban sudah dipilih untuk mengaktifkan tombol Next
+        }
+
+        function selectOption(index) {
+            userAnswers[currentQuestionIndex] = index; // Simpan pilihan peserta
+            loadQuestion(); // Refresh layar agar warna tombol berubah
+        }
+
+        // Kunci tombol next jika belum memilih
+        function checkNextButtonState() {
+            const nextBtn = document.getElementById('next-btn');
+            if (userAnswers[currentQuestionIndex] !== null) {
+                nextBtn.removeAttribute('disabled');
+                nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                nextBtn.setAttribute('disabled', 'true');
+                nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // Fungsi ke soal selanjutnya
+        function nextQuestion() {
+            if (userAnswers[currentQuestionIndex] === null) return;
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        // Fungsi ke soal sebelumnya
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function submitQuiz() {
+            // Validasi jika soal terakhir belum dijawab
+            if (userAnswers[currentQuestionIndex] === null) {
+                alert("Pilih jawaban terlebih dahulu sebelum mengumpulkan!");
+                return;
+            }
+
+            // Hitung jumlah jawaban yang benar
+            let correctCount = 0;
+            userAnswers.forEach((ans, idx) => {
+                if (ans === questions[idx].answer) {
+                    correctCount++;
+                }
+            });
+
+            // Menghitung Nilai Skala 100 (Rumus: (Benar / Total Soal) * 100)
+            const finalScore = Math.round((correctCount / questions.length) * 100);
+            const wrongCount = questions.length - correctCount;
+
+            // Tampilkan Data ke Layar Hasil (Halaman 3)
+            document.getElementById('display-name').innerText = userName;
+            document.getElementById('final-score').innerText = finalScore;
+            document.getElementById('score-details').innerText = `Benar: ${correctCount} | Salah: ${wrongCount}`;
+
+            // Pindah layar ke Halaman Hasil
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            // Jalankan fungsi simpan ke Google Spreadsheet
+            saveData(userName, userClass, finalScore, correctCount);
+        }
+
+        // Fungsi untuk mengirim data nilai ke Google Apps Script
+        function saveData(nama, kelas, nilai, benar) {
+            const statusEl = document.getElementById('saving-status');
+            
+            // Peringatan jika pengguna belum mengganti Link SCRIPT_URL
+            if (SCRIPT_URL === 'GANTI_TEKS_INI_DENGAN_LINK_DARI_GOOGLE_SCRIPT_TADI') {
+                statusEl.classList.remove('animate-pulse', 'bg-gray-100');
+                statusEl.classList.add('bg-yellow-100', 'text-yellow-800', 'border', 'border-yellow-300');
+                statusEl.innerText = "⚠️ Nilai sudah muncul, tapi TIDAK TERSIMPAN ke Spreadsheet karena Link Google Script belum Anda ganti di kode HTML-nya.";
+                return;
+            }
+
+            // Membangun URL untuk dikirim (Parameter Nama, Kelas, dll)
+            const url = `${SCRIPT_URL}?nama=${encodeURIComponent(nama)}&kelas=${encodeURIComponent(kelas)}&nilai=${nilai}&benar=${benar}`;
+            
+            // Proses pengiriman latar belakang (fetch)
+            fetch(url, {
+                method: 'GET',
+                mode: 'no-cors' // Mode ini wajib agar tidak ditolak oleh keamanan Browser
+            })
+            .then(response => {
+                statusEl.classList.remove('animate-pulse', 'bg-gray-100');
+                statusEl.classList.add('bg-green-100', 'text-green-800', 'border', 'border-green-300');
+                statusEl.innerText = "✅ Berhasil! Nilai Anda telah tersimpan ke rekapan guru (Spreadsheet).";
+            })
+            .catch(error => {
+                statusEl.classList.remove('animate-pulse', 'bg-gray-100');
+                statusEl.classList.add('bg-red-100', 'text-red-800', 'border', 'border-red-300');
+                statusEl.innerText = "❌ Gagal menyimpan. Pastikan internet lancar atau Link Google Script sudah benar.";
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
