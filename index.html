@@ -119,8 +119,9 @@
     <script>
         // =========================================================================
         // PENTING!!! GANTI LINK DI BAWAH INI DENGAN LINK DARI GOOGLE APPS SCRIPT
+        // BUKAN link docs.google.com, TETAPI link yang berawalan https://script.google.com/...
         // =========================================================================
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8ooOESLDSodoSd3JE5tD66u0ApTFWa1TiQH_zzb7D7Beje_CzFl9hlI_7mMd2HTD3/exec'; 
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyoERuwOCdo7J65xTQQuDvfY2gZn9OshkU7yxuX2zhcSHjIg_NNf_es-HYpHwP-_8e9/exec'; 
         
         // Data Soal (20 Soal Pilihan Ganda dari dokumen)
         const questions = [
@@ -365,6 +366,9 @@
             const finalScore = Math.round((correctCount / questions.length) * 100);
             const wrongCount = questions.length - correctCount;
 
+            const abcd = ['A', 'B', 'C', 'D', 'E'];
+            const detailJawaban = userAnswers.map(ans => ans !== null ? abcd[ans] : '-').join(',');
+
             // Tampilkan Data ke Layar Hasil (Halaman 3)
             document.getElementById('display-name').innerText = userName;
             document.getElementById('final-score').innerText = finalScore;
@@ -374,24 +378,22 @@
             quizScreen.classList.add('hidden');
             resultScreen.classList.remove('hidden');
 
-            // Jalankan fungsi simpan ke Google Spreadsheet
-            saveData(userName, userClass, finalScore, correctCount);
+            saveData(userName, userClass, finalScore, correctCount, detailJawaban);
         }
 
         // Fungsi untuk mengirim data nilai ke Google Apps Script
-        function saveData(nama, kelas, nilai, benar) {
+        function saveData(nama, kelas, nilai, benar, jawaban) {
             const statusEl = document.getElementById('saving-status');
             
             // Peringatan jika pengguna belum mengganti Link SCRIPT_URL
-            if (SCRIPT_URL === 'GANTI_TEKS_INI_DENGAN_LINK_DARI_GOOGLE_SCRIPT_TADI') {
+            if (SCRIPT_URL === 'PASTE_LINK_SCRIPT_GOOGLE_COM_DI_SINI' || SCRIPT_URL.includes('docs.google.com')) {
                 statusEl.classList.remove('animate-pulse', 'bg-gray-100');
                 statusEl.classList.add('bg-yellow-100', 'text-yellow-800', 'border', 'border-yellow-300');
-                statusEl.innerText = "⚠️ Nilai sudah muncul, tapi TIDAK TERSIMPAN ke Spreadsheet karena Link Google Script belum Anda ganti di kode HTML-nya.";
+                statusEl.innerText = "⚠️ Nilai muncul, tapi TIDAK TERSIMPAN. Pastikan Anda memasukkan link yang berawalan https://script.google.com/... di dalam kode HTML.";
                 return;
             }
 
-            // Membangun URL untuk dikirim (Parameter Nama, Kelas, dll)
-            const url = `${SCRIPT_URL}?nama=${encodeURIComponent(nama)}&kelas=${encodeURIComponent(kelas)}&nilai=${nilai}&benar=${benar}`;
+            const url = `${SCRIPT_URL}?nama=${encodeURIComponent(nama)}&kelas=${encodeURIComponent(kelas)}&nilai=${nilai}&benar=${benar}&jawaban=${encodeURIComponent(jawaban)}`;
             
             // Proses pengiriman latar belakang (fetch)
             fetch(url, {
